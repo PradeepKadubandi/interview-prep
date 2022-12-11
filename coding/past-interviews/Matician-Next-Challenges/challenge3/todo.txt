@@ -1,0 +1,24 @@
+Pending:
+Requirements: Custom port
+
+Requirements: Scale (100 works, 1000 does not)
+
+----------
+
+Long Read:
+https://www.oreilly.com/library/view/optimized-c/9781491922057/ch04.html - find time to read this!!
+https://dens.website/tutorials/cpp-asio/dynamic-buffers
+http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3388.pdf
+https://beej.us/guide/bgipc/html/multi/signals.html
+https://vinniefalco.github.io/papers/p1100r0.html
+https://medium.com/@winwardo/c-moves-for-people-who-dont-know-or-care-what-rvalues-are-%EF%B8%8F-56ee122dda7
+https://theboostcpplibraries.com/boost.asio-network-programming
+
+
+Interesting Read:
+https://stackoverflow.com/questions/1563897/static-constant-string-class-member
+https://stackoverflow.com/questions/54946344/boost-asio-and-co-await-use-with-any-third-party-callback (has links to co-routine lectures)
+http://danielmendel.github.io/blog/2013/04/07/benchmarkers-beware-the-ephemeral-port-limit/
+https://gist.github.com/mbbx6spp/3154170
+https://www.technical-recipes.com/2014/using-subset-boost-in-windows/
+

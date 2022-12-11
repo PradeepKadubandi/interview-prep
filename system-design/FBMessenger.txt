@@ -1,0 +1,28 @@
+Functional:
+ - Send and receive text (one-to-one chat)
+ - Group chat
+ - Add / Remove friends / contacts
+ - Create groups from contacts
+ - online / offline status
+ - storage of chat history
+Non Functional:
+ - Responsive and low latency chat (real time)
+ - highly consistent (same chat on all devices)
+ - highly available but can take hit for consistency
+
+Capacity estimates:
+  Total Messages = 20 billion / day
+  Storage per day = 2 TB
+  Storage for 5 years = 3.6 PB
+  Incoming Data = Outgoing Data = 25 MB/s
+
+Thoughts:
+  - Storage is cold (only write, infrequent read)
+  - Network bandwidth management and latency are biggest concerns
+
+Workflow:
+  - User A sends message (to User B) to application server 
+  - Server stores the message to database and also sends the message to user B
+
+ 
+  

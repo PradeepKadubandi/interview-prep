@@ -1,0 +1,119 @@
+Let me start with saying this : The problem is quite interesting (because of closeness to real world setup) and challenging.
+
+What makes it especially challenging is the 'variable charge rates' at different stations.
+
+If the charge rates were uniform across all stations, the problem is a simple shortest path problem,
+(each charge station as one node, edge costs being time to reach stations) and can be solved by using Dijksraw's algorithm.
+
+With the given problem setup, there are a few ways to approach the problem. I will briefly explan
+different approaches I considered and attempted and also talk a little bit about code organization.
+
+Approach 1(Bruite force):
+- I started with a bruit force recursive depth first search to enumerate all possible paths
+  and pick the one with least reaching time.
+  - The recursive structure is : OPT[Start, Goal] = Min (among all Vi) {Time(S -> Vi) + OPT[Vi, Goal]} where Vi in {S.neighbors}
+- Between intermediate stations, I consider only 2 possible cases : 
+  a) charge to full range at current station before driving to next one
+  b) charge just minimal time required to reach the next station and drive to next one.
+- So I keep track of remaining range at a station and time from source to calculate the above 2 scenarios accurately.
+- This has exponential run time and does not run in reasonable time for the given network 
+  size (it's unusable after ~10 stations in network).
+- This approach is not included in submitted code.
+
+Approach 2 (Exhaustive BFS with heuristics):
+- The graph is still one node per charge station and edge costs are great circle distances between nodes
+  - only edges with less distance than full range (320 km) are included and there are no edges between other stations.
+- Breadth first search to enumerate all paths with heuristics to reduce the search space.
+  - The approach takes some inspiration from Bellman-Ford algorithm in the sense that no path needs to have more length than V-1
+    (V being the number of vertices), so runs breadth first search only for V-1 iterations.
+  - Because of possibility of different remaining ranges when reaching a station in addition to time to reach a station, I
+    keep track of possible remaining range and time from source for each station in a list as we run BFS iterations.
+  - If I keep all possible pairs of remaining range and time from source as I execute BFS, the solution still takes a long time (un-usable).
+  - To reduce the search space, I chose a comparison approach between two pairs of <remaining_range, time_from_source> at any
+    given station (based on charge rate at that station) and used that as heuristic to only add pairs that are better than all other
+    pairs seen so far for that station.
+  - With that approach, I was able to run the sample test case in reasonable time (a few minutes though) and the returned
+    path is feasible, however sub-optimal (comes close to optimal).
+- This code is in "bfs.h" file.
+
+Approach 3 (A Star):
+- An interesting observation about the problem setup is, we have a nice admissible heuristic for cost to reach goal.
+  - The great circle distance (and the the correspondig time from uniform speed) from a charge station (node) to the goal station
+    does not consider the required charging times at intermediate stations and always an admissible heuristic.
+- The above makes the A* algorithm a good candidate to approach this problem.
+- The graph is still one node per charging station and edge costs as distances between nodes.
+  - (this distance can always be simply converted to time by dividing with speed)
+- I am using lazy deletion approach with priority queue as explained by the top answer in the post below:
+  Reference: (https://stackoverflow.com/questions/9209323/easiest-way-of-using-min-priority-queue-with-key-update-in-c)
+- With this approach, the code runs much faster for test sample (did not measure the exact time, though it's less than a minute and feels almost immediate)
+- I got a better optimal path too with this approach (than the BFS) for the sample test case.
+- Obviously the returned path is a feasible path.
+- The code for this is in "astar.h" file.
+
+Approach 4 (Discretization of state space, not attempted):
+- Another approach I thought about is to use some discretization factor (for example, say 1 KM) to split each single
+  node for a given charing station into multiple stations with remaining range at station as part of node id.
+  - For example, for some charging station 'S', we will have nodes like '(S, 0)', '(S, 1)' ... '(S, 320)' where
+    each node '(S, i)' corresponds to a state where car reaches station S with remaining range = i KM.
+  - For such a graph edges will be intuitively defined:
+    - Between nodes with same station 'S' and different remaining ranges, we use charge rate at 'S' (and the discretization factor) to
+      find the time for charging to reach the goal range and define that as edge cost (directed edge from lower value to higher value).
+    - Between nodes with different charging stations say S1 and S2, if the distance is 'D', we could define edges between all feasible
+      pairs of nodes:
+      - i.e., when the diffence between remaining ranges of nodes is same as distance 'D' - note that this requires some approaximation based on discretization factor.
+      - edge cost will be the time to reach i.e., (D / SPEED). [Again some approaximation is assumed, strictly, we can add charging time at destination to the edge cost to make the remaining_range reach the integer value after travelling D]
+  - Once, we define the graph in the above way, we could use Dijksraw's algorithm to find the shortest path from '(Start, 320)', '(Goal, 0)'.
+- I haven't coded this approach in the interest of time.
+
+
+Comments about code:
+-----------------------
+- The organization of code is not ideal, I first put everything in 'main.cpp' as I tried different approaches and later
+  separated different pieces / approaches into different header files.
+  - Obviously this is not how one should maintain a large codebase, when I am operating within a large codebase, structure in that
+    codebase naturally defines the code organization. I took a short-cut given this is an interview problem and self-contained small code.
+
+- There is some duplication of code between different approaches, again this was an artifact of trying thigs out quick.
+  I consider this as prototype code, and ideally once we settle on good prototype, we can go ahead and discard other prototypes (no more duplication)
+  and refactor the code in selected prototype to make it maitainable.
+
+Instruction for executing code:
+---------------------------------
+I compiled using the command : "g++ -std=c++11 -O1 main.cpp network.cpp -o bin/candidate_solution"
+So to run do : "bin/candidate_solution Council_Bluffs_IA Cadillac_MI"
+
+Known Issues / Possible improvements:
+--------------------------------------
+- [Fixed With Latest] When I ran the A-star approach between all possible pairs, the algorithm used to output some paths which are not feasible.
+  As I expected, this seemed to be because of small rouding errors from floating point calculations.
+  I used a small hack to fix this : Whenever we include the scenario where we just drive enough the reach the next station, I added a small
+    offset distance to avoid these small erros and that avoids all the infeasible paths.
+  Obviously, this has a very slight impact on optimality of the arrived solution.
+
+- In A-star approach, when we hit target once, the current implementation uses that value as the result.
+  Perhaps we could make an exception to just 'target' node and continue exploring other paths that reach 'target' node (like we do in BFS)
+  and choose the path that results in least time to reach 'target'. 
+  - This is easy to do in code, never add 'target' to visited set, keep accumulating values whenever we see target and later find the optimal among these.
+  - Will do after I send the first submission as I am curious how does this impact optimality (vs) running time.
+
+- Perhaps we could try removing 'visited' altogether and instead keep trying all possible paths in priority queue order.
+  This will be same as BFS implementation with the difference that we prioritize exploring paths of least cost heurisitc rather than edge list order.
+  We might as well use heuristics like in BFS to filter out adding some combinations of <remaining_range, time_from_source> pairs of a given node like in BFS.
+  This will obviously increase the computational cost (run time) of algorithm.
+
+Further thoughts:
+------------------
+- One obvious consideration for this problem from a business perspective is, the stations are usually fixed and static, so we
+  can precompute shortest time paths between each pair once using any of the above approaches and save the result (because 
+  of an intuitive assumption that calculating shortest time path is a one time non-volatile computation that will be used millions
+  of times by customers.) Obviously whenver a new charging station is added / better chargers replace existing old chargers, 
+  the algorithm can be re-run for new computation.
+
+- From a practical perspective, 'Uniform Speed' is one of the (perhaps weakest) assumptions from the real-world setup. One could
+  use Machine Learning techniques to estimate time to travel between different charging stations and use that for planning in the
+  algorithm. However, that makes the algorithm require online computation rather than offline computation like reasoned above as the ML
+  model may predict different times of travel based on different conditions (time of travel, weather etc..).
+
+Confession:
+--------------
+The problem is quite challenging and interesting that I spent more time than suggested 4 hour mark (especially because I tried different approaches).

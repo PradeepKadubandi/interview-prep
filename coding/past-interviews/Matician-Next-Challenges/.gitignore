@@ -1,0 +1,6 @@
+**/lib/
+**/include/
+**/bin
+**/.vscode
+logs
+chat_server_submission

@@ -1,0 +1,22 @@
+Twitter like service requirements:
+ - Customer flows:
+   - Users:
+     - Follow, Login
+   - Posts:
+     - Put, hash tags
+   - Feed:
+   - Privacy / Security
+ - Technical requirements:
+   - High availability
+   - Latency / Throughput: 
+      - Feed should be really fast (in particular the latest tweets)
+        - scroll feed can be fetched in background
+      - Posting tweet should acknowledge quickly but can store eventually
+   - Security against Attacks
+
+
+Million = Mega Bytes = 1e6
+Billion = Giga Bytes = 1e9
+Trillion = Tera Bytes = 1e12
+           Peta Bytes = 1e15
+           Exa Bytes = 1e18

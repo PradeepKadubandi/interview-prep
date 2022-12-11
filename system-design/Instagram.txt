@@ -1,0 +1,57 @@
+Functional
+ - Post a Photo
+ - Manage network / friends
+ - Access feed
+   - Like / reshare
+ - Search **
+Non-Functional
+ - Feed should be resposive, latest must be fast, paging is a leverage
+ - High available
+ - High reliability (no data loss)
+ - consistency is a loose requirement
+
+Data Design
+----------------
+Users:
+UserId
+UserDetails
+
+Relations:
+FollowedId
+FollowerId
+
+Photos:
+PhotoId
+UserId
+PhotoUri
+Created
+
+Design
+---------
+- For feed, we need to get posts by other users that current user is following
+  - This requires normally joining 3 tables in schema above
+  - Could use cache here?
+  - Data partitioning/sharding will help
+    - Cluster the users into groups of friends in general case
+    - This will raise the question of hubs (popular users)
+      - These could be replicated over different partitioned stores? 
+    - Other choices for partitioning are region based (could be effective)
+      - name based is definetely ineffective
+
+- Network bandwidth is also going to be a bottleneck because of images
+  - CDN server / CDN cache will help
+
+- Write (post images) should perhaps deal with image compression / quality maitenance
+  - storing different quality images to serve based on accessing platform (mobile / web)
+
+- Search is a separate micro service that builds indexes
+
+Retrospection
+---------------
+- sharding idea was meaningless
+- missed a few interesting details about application logic Like:
+  - separating read and upload parts of services
+  - generation of ids for sharding / sorting
+  - assumed that time based sorting is the only thing for news feed but
+    missed there could be more advanced ranking needs / filtering needs
+  
