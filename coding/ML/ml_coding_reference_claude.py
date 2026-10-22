@@ -1109,14 +1109,20 @@ def poly_area(P):
 
 def clip_poly(subject, clipper):
     """Sutherland–Hodgman: clip subject [K,2] by convex CCW clipper [L,2] -> polygon."""
-    def inside(p, a, b):
-        # Cross product >= 0 => left of edge a->b (inside for CCW clipper).
-        return (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0]) >= 0
+    def side(p, a, b):
+        # 2D cross u x v = u[0]*v[1] - u[1]*v[0], here u = b - a, v = p - a.
+        # Signed area = |b - a| * signed distance of p
+        # from line a->b. > 0 => left of edge (inside for CCW clipper).
+        # If still not clear, refer to this chat: https://claude.ai/chat/36c17a44-e27a-449d-82e6-26504fa14f34
+        return (b[0] - a[0]) * (p[1] - a[1]) - (b[1] - a[1]) * (p[0] - a[0])
+
+    inside = lambda p, a, b: side(p, a, b) >= 0
 
     def intersect(p, q, a, b):
-        d1, d2 = q - p, b - a
-        t = ((a[0] - p[0]) * d2[1] - (a[1] - p[1]) * d2[0]) / (d1[0] * d2[1] - d1[1] * d2[0])
-        return p + t * d1
+        # side() is linear along p->q, so interpolate to its zero.
+        # Only called when p, q are on opposite sides, so sp - sq != 0.
+        sp, sq = side(p, a, b), side(q, a, b)
+        return p + (sp / (sp - sq)) * (q - p)
 
     out = list(subject)
     for i in range(len(clipper)):
